@@ -1,0 +1,4 @@
+- fitur Budgeting
+- Saldo sesuai budgetting yang sudah di setup
+- setiap budgeting mempunyai historical saldo awal pemasukan dan pengeluaran
+- ada laporan berbentuk diagram untuk masing2 budgetting yg sudah dibuat

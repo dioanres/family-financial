@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Target,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
@@ -42,6 +43,11 @@ const navItems = [
     label: "Belanja",
     href: "/shopping",
     icon: ShoppingCart,
+  },
+  {
+    label: "Budget",
+    href: "/budgets",
+    icon: Target,
   },
   {
     label: "Pengaturan",
