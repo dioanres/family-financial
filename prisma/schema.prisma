@@ -32,6 +32,7 @@ model Transaction {
 
 model Budget {
   id         String    @id @default(cuid())
+  name       String    @default("")
   amount     Float
   startDate  DateTime
   endDate    DateTime

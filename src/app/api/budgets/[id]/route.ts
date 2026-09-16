@@ -12,6 +12,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const budget = await prisma.budget.update({
       where: { id: params.id },
       data: {
+        ...(data.name !== undefined && { name: data.name }),
         ...(data.amount !== undefined && { amount: parseFloat(data.amount) }),
         ...(data.startDate && { startDate: new Date(data.startDate) }),
         ...(data.endDate && { endDate: new Date(data.endDate) }),

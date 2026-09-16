@@ -61,13 +61,14 @@ export async function POST(req: Request) {
     const familyId = await getUserFamilyId(session.user.email);
     if (!familyId) return NextResponse.json({ error: "Anda belum tergabung dalam keluarga" }, { status: 400 });
 
-    const { amount, startDate, endDate, categoryId } = await req.json();
+    const { name, amount, startDate, endDate, categoryId } = await req.json();
     if (!amount || !startDate || !endDate) {
       return NextResponse.json({ error: "Nominal, tanggal mulai, dan tanggal selesai wajib diisi" }, { status: 400 });
     }
 
     const budget = await prisma.budget.create({
       data: {
+        name: name || "",
         amount: parseFloat(amount),
         startDate: new Date(startDate),
         endDate: new Date(endDate),

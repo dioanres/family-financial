@@ -6,11 +6,11 @@ import { Plus, Trash2, X, Pencil, AlertCircle, CheckCircle, Target, TrendingDown
 
 interface Category { id: string; name: string; icon: string | null; color: string | null; }
 interface Budget {
-  id: string; amount: number; spent: number; startDate: string; endDate: string;
+  id: string; name: string; amount: number; spent: number; startDate: string; endDate: string;
   categoryId: string | null; category: Category | null;
 }
 
-const defaultForm = { amount: "", startDate: "", endDate: "", categoryId: "" };
+const defaultForm = { name: "", amount: "", startDate: "", endDate: "", categoryId: "" };
 const defaultExpenseForm = { amount: "", description: "", date: "" };
 
 export default function BudgetsPage() {
@@ -62,13 +62,14 @@ export default function BudgetsPage() {
     const end = new Date(y, m, 0);
     const endStr = `${y}-${String(m).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
     setEditingId(null);
-    setForm({ amount: "", startDate: start, endDate: endStr, categoryId: "" });
+    setForm({ name: "", amount: "", startDate: start, endDate: endStr, categoryId: "" });
     setShowForm(true);
   }
 
   function openEdit(b: Budget) {
     setEditingId(b.id);
     setForm({
+      name: b.name || "",
       amount: String(b.amount),
       startDate: new Date(b.startDate).toISOString().split("T")[0],
       endDate: new Date(b.endDate).toISOString().split("T")[0],
@@ -153,11 +154,12 @@ export default function BudgetsPage() {
 
   const chartData = useMemo(() => {
     return budgets.map(b => {
-      const name = b.category?.name || "Tanpa Kategori";
+      const categoryName = b.category?.name || "Tanpa Kategori";
+      const budgetName = b.name || categoryName;
       const icon = b.category?.icon || "📋";
       const color = b.category?.color || "#6b7280";
       const pct = b.amount > 0 ? Math.round((b.spent / b.amount) * 100) : 0;
-      return { ...b, name, icon, color, pct, remaining: b.amount - b.spent };
+      return { ...b, categoryName, budgetName, icon, color, pct, remaining: b.amount - b.spent };
     });
   }, [budgets]);
 
@@ -219,7 +221,7 @@ export default function BudgetsPage() {
             {chartData.map((item) => (
               <div key={item.id}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">{item.icon} {item.name}</span>
+                  <span className="text-sm font-medium">{item.icon} {item.budgetName}</span>
                   <span className="text-sm text-muted-foreground">
                     {formatCurrency(item.spent)} / {formatCurrency(item.amount)}
                     <span className={`ml-2 font-semibold ${item.pct > 100 ? "text-red-600" : item.pct > 80 ? "text-orange-600" : "text-emerald-600"}`}>
@@ -256,6 +258,10 @@ export default function BudgetsPage() {
               <button onClick={() => { setShowForm(false); setEditingId(null); }} className="rounded-lg p-1 hover:bg-accent"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Nama Budget</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Contoh: Makanan Bulanan, Transportasi Januari" className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
               <div>
                 <label className="text-sm font-medium">Kategori</label>
                 <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
@@ -301,11 +307,14 @@ export default function BudgetsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-semibold">{item.icon} {item.name}</h3>
+                    <h3 className="text-base font-semibold">{item.icon} {item.budgetName}</h3>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${item.pct > 100 ? "bg-red-50 text-red-700" : item.pct > 80 ? "bg-orange-50 text-orange-700" : "bg-emerald-50 text-emerald-700"}`}>
                       {item.pct}%
                     </span>
                   </div>
+                  {item.budgetName !== item.categoryName && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{item.categoryName}</p>
+                  )}
                   <p className="text-sm text-muted-foreground mt-1">
                     {new Date(item.startDate).toLocaleDateString("id-ID")} — {new Date(item.endDate).toLocaleDateString("id-ID")}
                   </p>
