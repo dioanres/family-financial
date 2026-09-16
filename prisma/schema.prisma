@@ -1,0 +1,158 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id       String  @id @default(cuid())
+  name     String
+  icon     String?
+  color    String?
+  familyId String
+  family   Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets  Budget[]
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  amount      Float
+  type        String    // INCOME, EXPENSE
+  description String?
+  date        DateTime  @default(now())
+  familyId    String
+  categoryId  String?
+  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Budget {
+  id         String    @id @default(cuid())
+  amount     Float
+  startDate  DateTime
+  endDate    DateTime
+  familyId   String
+  categoryId String?
+  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  category   Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Family {
+  id          String         @id @default(cuid())
+  name        String
+  image       String?
+  inviteCode  String?        @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  members     FamilyMember[]
+  categories  Category[]
+  transactions Transaction[]
+  budgets     Budget[]
+  tasks       Task[]
+  shoppingItems ShoppingItem[]
+  events      CalendarEvent[]
+}
+
+enum FamilyRole {
+  ADMIN
+  PARENT
+  CHILD
+}
+
+model FamilyMember {
+  id       String     @id @default(cuid())
+  userId   String
+  familyId String
+  role     FamilyRole @default(PARENT)
+  nickname String?
+  points   Int        @default(0)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family   Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, familyId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  priority    String    @default("LOW") // LOW, MEDIUM, HIGH
+  dueDate     DateTime?
+  assignedToId String?
+  familyId    String
+  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+}
+
+model ShoppingItem {
+  id       String  @id @default(cuid())
+  name     String
+  quantity Int     @default(1)
+  unit     String?
+  isBought Boolean @default(false)
+  familyId String
+  family   Family  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  location    String?
+  familyId    String
+  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  familyMembers FamilyMember[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
