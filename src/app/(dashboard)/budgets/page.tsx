@@ -31,6 +31,11 @@ export default function BudgetsPage() {
   const [expenseForm, setExpenseForm] = useState(defaultExpenseForm);
   const [expenseLoading, setExpenseLoading] = useState(false);
 
+  // Transaction list state per budget
+  const [expandedBudgetId, setExpandedBudgetId] = useState<string | null>(null);
+  const [budgetTransactions, setBudgetTransactions] = useState<Record<string, { id: string; amount: number; description: string | null; date: string }[]>>({});
+  const [txLoading, setTxLoading] = useState(false);
+
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -113,6 +118,7 @@ export default function BudgetsPage() {
   }
 
   function openQuickAdd(budget: Budget) {
+    setExpandedBudgetId(null); // close transaction list
     setQuickAddBudgetId(budget.id);
     setExpenseForm({
       amount: "",
@@ -150,6 +156,28 @@ export default function BudgetsPage() {
     } finally {
       setExpenseLoading(false);
     }
+  }
+
+  async function fetchBudgetTransactions(budget: Budget) {
+    if (expandedBudgetId === budget.id) {
+      setExpandedBudgetId(null);
+      return;
+    }
+    setQuickAddBudgetId(null); // close quick-add form
+    setExpandedBudgetId(budget.id);
+    if (budgetTransactions[budget.id]) return; // already fetched
+
+    setTxLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("type", "EXPENSE");
+      if (budget.categoryId) params.set("categoryId", budget.categoryId);
+      params.set("from", new Date(budget.startDate).toISOString().split("T")[0]);
+      params.set("to", new Date(budget.endDate).toISOString().split("T")[0]);
+      const res = await fetch(`/api/transactions?${params}`);
+      const data = await res.json();
+      setBudgetTransactions(prev => ({ ...prev, [budget.id]: data.transactions || [] }));
+    } catch (e) { console.error(e); } finally { setTxLoading(false); }
   }
 
   const chartData = useMemo(() => {
@@ -327,11 +355,42 @@ export default function BudgetsPage() {
                   </div>
                 </div>
                 <div className="flex gap-1 ml-3">
-                  <button onClick={() => openQuickAdd(item)} title="Tambah pengeluaran" className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50"><DollarSign size={14} /></button>
                   <button onClick={() => openEdit(item)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={14} /></button>
                   <button onClick={() => handleDelete(item.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-destructive"><Trash2 size={14} /></button>
                 </div>
               </div>
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => openQuickAdd(item)} className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 flex items-center justify-center gap-2">
+                  <DollarSign size={15} /> Tambah Pengeluaran
+                </button>
+                <button onClick={() => fetchBudgetTransactions(item)} className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium flex items-center justify-center gap-2 ${expandedBudgetId === item.id ? "border-primary bg-primary/5 text-primary" : "border-muted-foreground/20 hover:bg-accent"}`}>
+                  <TrendingDown size={15} /> Lihat Pengeluaran
+                </button>
+              </div>
+
+              {/* Transaction list */}
+              {expandedBudgetId === item.id && (
+                <div className="mt-3 pt-3 border-t">
+                  {txLoading ? (
+                    <p className="text-sm text-muted-foreground text-center py-3">Memuat...</p>
+                  ) : (budgetTransactions[item.id]?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-3">Belum ada pengeluaran</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">📋 {budgetTransactions[item.id]?.length} transaksi</p>
+                      {budgetTransactions[item.id]?.map((tx) => (
+                        <div key={tx.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate font-medium">{tx.description || "Tanpa keterangan"}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(tx.date).toLocaleDateString("id-ID")}</p>
+                          </div>
+                          <span className="ml-3 font-semibold text-red-600">{formatCurrency(tx.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Quick-add expense form */}
               {quickAddBudgetId === item.id && (
