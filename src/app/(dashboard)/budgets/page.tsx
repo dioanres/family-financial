@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, X, Pencil, AlertCircle, CheckCircle, Target, TrendingDown } from "lucide-react";
+import { Plus, Trash2, X, Pencil, AlertCircle, CheckCircle, Target, TrendingDown, DollarSign } from "lucide-react";
 
 interface Category { id: string; name: string; icon: string | null; color: string | null; }
 interface Budget {
@@ -11,6 +11,7 @@ interface Budget {
 }
 
 const defaultForm = { amount: "", startDate: "", endDate: "", categoryId: "" };
+const defaultExpenseForm = { amount: "", description: "", date: "" };
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -24,6 +25,12 @@ export default function BudgetsPage() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Quick-add expense state
+  const [quickAddBudgetId, setQuickAddBudgetId] = useState<string | null>(null);
+  const [expenseForm, setExpenseForm] = useState(defaultExpenseForm);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -102,6 +109,46 @@ export default function BudgetsPage() {
     const [y, m] = month.split("-").map(Number);
     const d = new Date(y, m - 1 + delta, 1);
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  function openQuickAdd(budget: Budget) {
+    setQuickAddBudgetId(budget.id);
+    setExpenseForm({
+      amount: "",
+      description: "",
+      date: new Date().toISOString().split("T")[0],
+    });
+  }
+
+  async function handleQuickAddExpense(e: React.FormEvent, budget: Budget) {
+    e.preventDefault();
+    setExpenseLoading(true);
+    try {
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parseFloat(expenseForm.amount),
+          type: "EXPENSE",
+          description: expenseForm.description,
+          date: expenseForm.date,
+          categoryId: budget.categoryId,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setQuickAddBudgetId(null);
+        setExpenseForm(defaultExpenseForm);
+        fetchBudgets();
+        showToast("success", "Pengeluaran berhasil ditambahkan");
+      } else {
+        showToast("error", data.error || "Gagal menambah pengeluaran");
+      }
+    } catch (e) {
+      showToast("error", "Terjadi kesalahan jaringan");
+    } finally {
+      setExpenseLoading(false);
+    }
   }
 
   const chartData = useMemo(() => {
@@ -271,10 +318,33 @@ export default function BudgetsPage() {
                   </div>
                 </div>
                 <div className="flex gap-1 ml-3">
+                  <button onClick={() => openQuickAdd(item)} title="Tambah pengeluaran" className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-50"><DollarSign size={14} /></button>
                   <button onClick={() => openEdit(item)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={14} /></button>
                   <button onClick={() => handleDelete(item.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-destructive"><Trash2 size={14} /></button>
                 </div>
               </div>
+
+              {/* Quick-add expense form */}
+              {quickAddBudgetId === item.id && (
+                <form onSubmit={(e) => handleQuickAddExpense(e, item)} className="mt-4 pt-4 border-t space-y-3">
+                  <p className="text-sm font-medium text-emerald-700">➕ Tambah Pengeluaran</p>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} required placeholder="Nominal" className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+                    <div className="flex-1">
+                      <input type="date" value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} required className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+                  </div>
+                  <input type="text" value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} placeholder="Keterangan (opsional)" className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  <div className="flex gap-2 justify-end">
+                    <button type="button" onClick={() => setQuickAddBudgetId(null)} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-accent">Batal</button>
+                    <button type="submit" disabled={expenseLoading} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+                      {expenseLoading ? "Menyimpan..." : "Simpan"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           ))}
         </div>
