@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Plus, Trash2, X, Pencil, AlertCircle, CheckCircle, Target, TrendingDown, DollarSign } from "lucide-react";
 
 interface Category { id: string; name: string; icon: string | null; color: string | null; }
@@ -301,7 +302,7 @@ export default function BudgetsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Nominal Budget</label>
-                <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required placeholder="500000" className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                <CurrencyInput value={form.amount} onChange={(digits) => setForm({ ...form, amount: digits })} required placeholder="500.000" className="mt-1" />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
@@ -398,7 +399,7 @@ export default function BudgetsPage() {
                   <p className="text-sm font-medium text-emerald-700">➕ Tambah Pengeluaran</p>
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} required placeholder="Nominal" className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                      <CurrencyInput value={expenseForm.amount} onChange={(digits) => setExpenseForm({ ...expenseForm, amount: digits })} required placeholder="Nominal" />
                     </div>
                     <div className="flex-1">
                       <input type="date" value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} required className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />

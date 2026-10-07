@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, X, Pencil, Download, Filter, AlertCircle, CheckCircle } from "lucide-react";
 
 interface Transaction {
@@ -241,7 +242,7 @@ export default function FinancePage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Jumlah (Rp)</label>
-                <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required min="0" placeholder="0" className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                <CurrencyInput value={form.amount} onChange={(digits) => setForm({ ...form, amount: digits })} required className="mt-1" />
               </div>
               <div>
                 <label className="text-sm font-medium">Keterangan</label>
