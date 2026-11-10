@@ -72,6 +72,35 @@ export function SpinWheel({ members, winnerId, onSpinEnd }: SpinWheelProps) {
               />
             );
           })}
+          {members.map((m, i) => {
+            // Label runs radially outward from near the hub along the
+            // segment's center angle. On the wheel's left half the raw
+            // angle would render the text upside-down, so it's rotated an
+            // extra 180° and anchored from the opposite end — same radial
+            // position, right-side up.
+            const centerAngle = (i + 0.5) * segmentSize - 90;
+            const normalized = ((centerAngle % 360) + 360) % 360;
+            const flip = normalized > 90 && normalized < 270;
+            const radius = 35;
+            const name = m.name ?? "";
+            const label = name.length > 12 ? `${name.slice(0, 11)}…` : name;
+            return (
+              <text
+                key={m.id}
+                x={flip ? 100 - radius : 100 + radius}
+                y={100}
+                fill="#ffffff"
+                fontSize="10"
+                fontWeight={600}
+                textAnchor={flip ? "end" : "start"}
+                dominantBaseline="middle"
+                transform={`rotate(${flip ? centerAngle + 180 : centerAngle} 100 100)`}
+                style={{ pointerEvents: "none" }}
+              >
+                {label}
+              </text>
+            );
+          })}
         </svg>
       </div>
       <div className="flex flex-wrap justify-center gap-2 text-xs">

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { SpinWheel } from "@/components/arisan/spin-wheel";
-import { Copy, RefreshCw, UserMinus, Check } from "lucide-react";
+import { Copy, RefreshCw, UserMinus, Check, ShieldCheck } from "lucide-react";
 
 interface Member {
   id: string;
@@ -90,6 +90,26 @@ export default function ArisanDetailPage() {
       const d = await res.json();
       if (res.ok) fetchData();
       else setError(d.error || "Gagal membuat kode baru");
+    } catch {
+      setError("Terjadi kesalahan jaringan");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleMakeAdmin(memberId: string, name: string | null) {
+    if (!confirm(`Jadikan ${name} admin arisan ini?`)) return;
+    setError("");
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/arisan/${id}/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "ADMIN" }),
+      });
+      const d = await res.json();
+      if (res.ok) fetchData();
+      else setError(d.error || "Gagal menjadikan admin");
     } catch {
       setError("Terjadi kesalahan jaringan");
     } finally {
@@ -245,14 +265,25 @@ export default function ArisanDetailPage() {
                   </span>
                 )}
               </div>
-              {isAdmin && arisan.status === "OPEN" && m.role !== "ADMIN" && (
-                <button
-                  onClick={() => handleRemoveMember(m.id)}
-                  disabled={actionLoading}
-                  className="text-muted-foreground hover:text-destructive disabled:opacity-50"
-                >
-                  <UserMinus size={16} />
-                </button>
+              {isAdmin && m.role !== "ADMIN" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleMakeAdmin(m.id, m.name)}
+                    disabled={actionLoading}
+                    className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                  >
+                    <ShieldCheck size={14} /> Jadikan admin
+                  </button>
+                  {arisan.status === "OPEN" && (
+                    <button
+                      onClick={() => handleRemoveMember(m.id)}
+                      disabled={actionLoading}
+                      className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                    >
+                      <UserMinus size={16} />
+                    </button>
+                  )}
+                </div>
               )}
             </li>
           ))}
