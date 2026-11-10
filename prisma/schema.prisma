@@ -122,6 +122,93 @@ model User {
   accounts      Account[]
   sessions      Session[]
   familyMembers FamilyMember[]
+  arisanMembers  ArisanMember[]
+  arisansCreated Arisan[]       @relation("ArisanCreatedBy")
+  notifications  Notification[]
+}
+
+enum ArisanStatus {
+  OPEN
+  ACTIVE
+  COMPLETED
+}
+
+enum ArisanRole {
+  ADMIN
+  MEMBER
+}
+
+model Arisan {
+  id                 String       @id @default(cuid())
+  name               String
+  contributionAmount Float
+  paymentDueDay      Int
+  drawDay            Int
+  startMonth         DateTime
+  joinCode           String       @unique
+  status             ArisanStatus @default(OPEN)
+  createdById        String
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  createdBy          User         @relation("ArisanCreatedBy", fields: [createdById], references: [id])
+  members            ArisanMember[]
+  periods            ArisanPeriod[]
+}
+
+model ArisanMember {
+  id        String          @id @default(cuid())
+  arisanId  String
+  userId    String
+  role      ArisanRole      @default(MEMBER)
+  hasWon    Boolean         @default(false)
+  joinedAt  DateTime        @default(now())
+  arisan    Arisan          @relation(fields: [arisanId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wonPeriod ArisanPeriod?   @relation("ArisanPeriodWinner")
+  payments  ArisanPayment[]
+
+  @@unique([arisanId, userId])
+}
+
+model ArisanPeriod {
+  id             String          @id @default(cuid())
+  arisanId       String
+  periodNumber   Int
+  dueDate        DateTime
+  drawDate       DateTime
+  winnerMemberId String?         @unique
+  drawnAt        DateTime?
+  arisan         Arisan          @relation(fields: [arisanId], references: [id], onDelete: Cascade)
+  winner         ArisanMember?   @relation("ArisanPeriodWinner", fields: [winnerMemberId], references: [id])
+  payments       ArisanPayment[]
+
+  @@unique([arisanId, periodNumber])
+}
+
+model ArisanPayment {
+  id             String       @id @default(cuid())
+  periodId       String
+  memberId       String
+  isPaid         Boolean      @default(false)
+  paidAt         DateTime?
+  reminderSentAt DateTime?
+  period         ArisanPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  member         ArisanMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([periodId, memberId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  url       String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
 }
 
 model Account {

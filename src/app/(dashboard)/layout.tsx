@@ -13,10 +13,13 @@ import {
   Menu,
   X,
   Target,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notification-bell";
+import { OneSignalInit } from "@/components/onesignal-init";
 
 const navItems = [
   {
@@ -50,6 +53,11 @@ const navItems = [
     icon: Target,
   },
   {
+    label: "Arisan",
+    href: "/arisan",
+    icon: Users,
+  },
+  {
     label: "Pengaturan",
     href: "/settings",
     icon: Settings,
@@ -66,18 +74,22 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <OneSignalInit />
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
           <span className="text-xl">🏡</span>
           <span className="font-semibold text-foreground">Catatan Keluarga</span>
         </div>
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-lg p-2 hover:bg-accent transition-colors"
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="rounded-lg p-2 hover:bg-accent transition-colors"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Sidebar Overlay */}
@@ -95,14 +107,17 @@ export default function DashboardLayout({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-          <span className="text-2xl">🏡</span>
-          <span className="font-semibold text-foreground">Catatan Keluarga</span>
+        <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-6">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🏡</span>
+            <span className="font-semibold text-foreground">Catatan Keluarga</span>
+          </div>
+          <NotificationBell />
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -144,7 +159,7 @@ export default function DashboardLayout({
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card lg:hidden">
         <div className="flex items-center justify-around py-2">
           {navItems.slice(0, 5).map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
