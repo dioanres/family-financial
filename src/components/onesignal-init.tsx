@@ -27,9 +27,6 @@ export function OneSignalInit() {
       if (session.user.id) {
         await OneSignal.login(session.user.id);
       }
-      if (session.user.email) {
-        await OneSignal.User.addEmail(session.user.email);
-      }
     });
   }, [session]);
 

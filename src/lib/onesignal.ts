@@ -15,14 +15,12 @@ export async function sendOneSignalPush({ userIds, heading, content, url }: Send
     return;
   }
 
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Key ${apiKey}`,
-  };
-
-  await fetch(ONESIGNAL_API_URL, {
+  const res = await fetch(ONESIGNAL_API_URL, {
     method: "POST",
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Key ${apiKey}`,
+    },
     body: JSON.stringify({
       app_id: appId,
       target_channel: "push",
@@ -33,15 +31,7 @@ export async function sendOneSignalPush({ userIds, heading, content, url }: Send
     }),
   });
 
-  await fetch(ONESIGNAL_API_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      app_id: appId,
-      target_channel: "email",
-      include_aliases: { external_id: userIds },
-      email_subject: heading,
-      email_body: content,
-    }),
-  });
+  if (!res.ok) {
+    throw new Error(`OneSignal push gagal (${res.status}): ${await res.text()}`);
+  }
 }
