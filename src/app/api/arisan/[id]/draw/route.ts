@@ -83,19 +83,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     const monthLabel = formatMonthWIB(periodLabel);
 
     const winnerUserId = allMembers.find((m) => m.id === winner.memberId)!.userId;
-    const otherUserIds = allMembers.filter((m) => m.id !== winner.memberId).map((m) => m.userId);
 
-    sendNotification({
+    await sendNotification({
       userIds: [winnerUserId],
       title: "Selamat!",
       message: `🎉 Selamat ${winner.name}! Anda menerima arisan ${arisan.name} periode ${monthLabel} sebesar Rp${pot.toLocaleString("id-ID")}`,
-      url: `/arisan/${arisan.id}`,
-    }).catch((err) => console.error("sendNotification failed:", err));
-
-    sendNotification({
-      userIds: otherUserIds,
-      title: "Hasil kocokan",
-      message: `${winner.name} menerima arisan ${arisan.name} periode ${monthLabel}`,
       url: `/arisan/${arisan.id}`,
     }).catch((err) => console.error("sendNotification failed:", err));
 

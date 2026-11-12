@@ -55,7 +55,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
       return tx.arisan.findUnique({ where: { id: arisan.id } });
     });
 
-    sendNotification({
+    await sendNotification({
       userIds: members.map((m) => m.userId),
       title: "Arisan dimulai",
       message: `Arisan ${arisan.name} dimulai`,
