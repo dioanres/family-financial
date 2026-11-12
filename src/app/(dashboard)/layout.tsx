@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -78,8 +79,8 @@ export default function DashboardLayout({
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🏡</span>
-          <span className="font-semibold text-foreground">Catatan Keluarga</span>
+          <Image src="/logo/logo.png" alt="Rumadana" width={24} height={24} />
+          <span className="font-semibold text-foreground">Rumadana</span>
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
@@ -109,8 +110,8 @@ export default function DashboardLayout({
       >
         <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-6">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🏡</span>
-            <span className="font-semibold text-foreground">Catatan Keluarga</span>
+            <Image src="/logo/logo.png" alt="Rumadana" width={32} height={32} />
+            <span className="font-semibold text-foreground">Rumadana</span>
           </div>
           <NotificationBell />
         </div>

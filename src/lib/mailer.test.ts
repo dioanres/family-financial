@@ -17,7 +17,7 @@ const SMTP_ENV = {
   SMTP_SECURE: "false",
   SMTP_USER: "user@example.com",
   SMTP_PASS: "secret",
-  SMTP_FROM: "Catatan Keluarga <user@example.com>",
+  SMTP_FROM: "Rumadana <user@example.com>",
 };
 
 async function loadMailer() {
@@ -99,7 +99,7 @@ describe("sendEmail", () => {
     });
     expect(sendMail).toHaveBeenCalledTimes(2);
     expect(sendMail).toHaveBeenNthCalledWith(1, {
-      from: "Catatan Keluarga <user@example.com>",
+      from: "Rumadana <user@example.com>",
       to: "a@x.com",
       subject: "s",
       text: "t",

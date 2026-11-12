@@ -48,7 +48,7 @@ export function renderEmailTemplate({ title, message, url }: EmailTemplateParams
 <html lang="id">
   <body style="margin:0;padding:24px;background:#f5f5f4;font-family:Arial,sans-serif;color:#1c1917">
     <div style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px">
-      <p style="margin:0 0 4px;font-size:13px;color:#78716c">🏡 Catatan Keluarga</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#78716c">🏡 Rumadana</p>
       <h1 style="margin:0 0 12px;font-size:20px">${escapeHtml(title)}</h1>
       <p style="margin:0;font-size:15px;line-height:1.5">${escapeHtml(message)}</p>
       ${button}

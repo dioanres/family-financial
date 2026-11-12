@@ -6,7 +6,7 @@ import { AuthSessionProvider } from "@/components/session-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Catatan Keluarga",
+  title: "Rumadana",
   description: "Aplikasi manajemen keluarga modern untuk mengelola keuangan, tugas, dan agenda bersama.",
 };
 

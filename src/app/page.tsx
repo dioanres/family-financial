@@ -1,12 +1,19 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="text-center space-y-6 max-w-md">
-        <div className="text-6xl">🏡</div>
+        <Image
+          src="/logo/logo.png"
+          alt="Rumadana"
+          width={96}
+          height={96}
+          className="mx-auto"
+        />
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Catatan Keluarga
+          Rumadana
         </h1>
         <p className="text-muted-foreground leading-relaxed">
           Kelola keuangan, tugas, dan agenda keluarga Anda dalam satu tempat.
