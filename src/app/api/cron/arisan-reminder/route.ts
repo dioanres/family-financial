@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { tomorrowRangeWIB } from "@/lib/arisan";
+import { buildReminderMessage, dueDateRangeWIB } from "@/lib/arisan";
 import { sendNotification } from "@/lib/notify";
+
+const REMINDERS = [
+  {
+    daysAhead: 3,
+    notSent: { reminderH3SentAt: null },
+    markSent: (at: Date) => ({ reminderH3SentAt: at }),
+  },
+  {
+    daysAhead: 1,
+    notSent: { reminderSentAt: null },
+    markSent: (at: Date) => ({ reminderSentAt: at }),
+  },
+];
 
 export async function GET(req: Request) {
   if (!process.env.CRON_SECRET) {
@@ -15,38 +28,39 @@ export async function GET(req: Request) {
   }
 
   try {
-    const { start, end } = tomorrowRangeWIB(new Date());
-
-    const payments = await prisma.arisanPayment.findMany({
-      where: {
-        isPaid: false,
-        reminderSentAt: null,
-        period: {
-          dueDate: { gte: start, lt: end },
-          arisan: { status: "ACTIVE" },
-        },
-      },
-      include: { period: { include: { arisan: true } }, member: true },
-    });
-
+    const now = new Date();
     let sent = 0;
-    for (const payment of payments) {
-      const dueDateLabel = payment.period.dueDate.toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "Asia/Jakarta",
+
+    for (const { daysAhead, notSent, markSent } of REMINDERS) {
+      const { start, end } = dueDateRangeWIB(now, daysAhead);
+
+      const payments = await prisma.arisanPayment.findMany({
+        where: {
+          isPaid: false,
+          ...notSent,
+          period: {
+            dueDate: { gte: start, lt: end },
+            arisan: { status: "ACTIVE" },
+          },
+        },
+        include: { period: { include: { arisan: true } }, member: true },
       });
-      await sendNotification({
-        userIds: [payment.member.userId],
-        title: "Pengingat iuran arisan",
-        message: `Pengingat: iuran arisan ${payment.period.arisan.name} Rp${payment.period.arisan.contributionAmount.toLocaleString(
-          "id-ID"
-        )} jatuh tempo besok (${dueDateLabel})`,
-        url: `/arisan/${payment.period.arisanId}`,
-      });
-      await prisma.arisanPayment.update({ where: { id: payment.id }, data: { reminderSentAt: new Date() } });
-      sent++;
+
+      for (const payment of payments) {
+        await sendNotification({
+          userIds: [payment.member.userId],
+          title: "Pengingat iuran arisan",
+          message: buildReminderMessage({
+            arisanName: payment.period.arisan.name,
+            amount: payment.period.arisan.contributionAmount,
+            dueDate: payment.period.dueDate,
+            daysAhead,
+          }),
+          url: `/arisan/${payment.period.arisanId}`,
+        });
+        await prisma.arisanPayment.update({ where: { id: payment.id }, data: markSent(now) });
+        sent++;
+      }
     }
 
     return NextResponse.json({ sent });

@@ -78,13 +78,32 @@ export function formatMonthWIB(date: Date): string {
   });
 }
 
-export function tomorrowRangeWIB(now: Date): { start: Date; end: Date } {
+export function dueDateRangeWIB(now: Date, daysAhead: number): { start: Date; end: Date } {
   const wibNow = new Date(now.getTime() + WIB_OFFSET_MS);
   const year = wibNow.getUTCFullYear();
   const month = wibNow.getUTCMonth();
   const day = wibNow.getUTCDate();
 
-  const start = wibDateToUtc(year, month, day + 1);
-  const end = wibDateToUtc(year, month, day + 2);
+  const start = wibDateToUtc(year, month, day + daysAhead);
+  const end = wibDateToUtc(year, month, day + daysAhead + 1);
   return { start, end };
+}
+
+export function tomorrowRangeWIB(now: Date): { start: Date; end: Date } {
+  return dueDateRangeWIB(now, 1);
+}
+
+export function buildReminderMessage({
+  arisanName,
+  amount,
+  dueDate,
+  daysAhead,
+}: {
+  arisanName: string;
+  amount: number;
+  dueDate: Date;
+  daysAhead: number;
+}): string {
+  const when = daysAhead === 1 ? "besok" : `${daysAhead} hari lagi`;
+  return `Pengingat: iuran arisan ${arisanName} Rp${amount.toLocaleString("id-ID")} jatuh tempo ${when} (${formatDateWIB(dueDate)})`;
 }

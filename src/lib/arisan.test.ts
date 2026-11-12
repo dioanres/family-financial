@@ -7,6 +7,8 @@ import {
   wheelStopAngle,
   tomorrowRangeWIB,
   formatDateWIB,
+  dueDateRangeWIB,
+  buildReminderMessage,
 } from "./arisan";
 
 describe("buildPeriodDates", () => {
@@ -113,5 +115,51 @@ describe("tomorrowRangeWIB", () => {
     // tomorrow in WIB is 2026-11-11, which starts at 2026-11-10T17:00:00Z in UTC
     expect(start.toISOString()).toBe("2026-11-10T17:00:00.000Z");
     expect(end.toISOString()).toBe("2026-11-11T17:00:00.000Z");
+  });
+});
+
+describe("dueDateRangeWIB", () => {
+  it("returns the WIB day range N days ahead near midnight", () => {
+    // 2026-11-10 23:30 WIB == 2026-11-10 16:30 UTC → H+3 = 13 Nov WIB
+    const now = new Date("2026-11-10T16:30:00.000Z");
+    const { start, end } = dueDateRangeWIB(now, 3);
+    expect(start.toISOString()).toBe("2026-11-12T17:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-11-13T17:00:00.000Z");
+  });
+
+  it("crosses a month boundary", () => {
+    // 2026-11-29 08:00 WIB → H+3 = 2 Des WIB
+    const now = new Date("2026-11-29T01:00:00.000Z");
+    const { start } = dueDateRangeWIB(now, 3);
+    expect(start.toISOString()).toBe("2026-12-01T17:00:00.000Z");
+  });
+
+  it("matches tomorrowRangeWIB when daysAhead is 1", () => {
+    const now = new Date("2026-11-10T16:30:00.000Z");
+    expect(dueDateRangeWIB(now, 1)).toEqual(tomorrowRangeWIB(now));
+  });
+
+  it("contains a dueDate produced by buildPeriodDates exactly 3 days later", () => {
+    // jatuh tempo tgl 5 Des 2026; cron jalan 2 Des 08:00 WIB
+    const [period] = buildPeriodDates(new Date("2026-12-01T00:00:00.000Z"), 1, 5, 10);
+    const { start, end } = dueDateRangeWIB(new Date("2026-12-02T01:00:00.000Z"), 3);
+    expect(period.dueDate.getTime()).toBeGreaterThanOrEqual(start.getTime());
+    expect(period.dueDate.getTime()).toBeLessThan(end.getTime());
+  });
+});
+
+describe("buildReminderMessage", () => {
+  const dueDate = new Date("2026-12-04T17:00:00.000Z"); // 5 Des 2026 WIB
+
+  it("says '3 hari lagi' for H-3", () => {
+    expect(buildReminderMessage({ arisanName: "RT 05", amount: 500000, dueDate, daysAhead: 3 })).toBe(
+      "Pengingat: iuran arisan RT 05 Rp500.000 jatuh tempo 3 hari lagi (5 Desember 2026)"
+    );
+  });
+
+  it("says 'besok' for H-1", () => {
+    expect(buildReminderMessage({ arisanName: "RT 05", amount: 500000, dueDate, daysAhead: 1 })).toBe(
+      "Pengingat: iuran arisan RT 05 Rp500.000 jatuh tempo besok (5 Desember 2026)"
+    );
   });
 });
