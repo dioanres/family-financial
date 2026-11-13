@@ -65,6 +65,14 @@ const navItems = [
   },
 ];
 
+const mobileNavItems = [
+  navItems.find((item) => item.href === "/dashboard")!,
+  navItems.find((item) => item.href === "/finance")!,
+  navItems.find((item) => item.href === "/budgets")!,
+  navItems.find((item) => item.href === "/arisan")!,
+  navItems.find((item) => item.href === "/shopping")!,
+];
+
 export default function DashboardLayout({
   children,
 }: {
@@ -156,10 +164,19 @@ export default function DashboardLayout({
         </div>
       </main>
 
+      {/* Floating Tugas button */}
+      <Link
+        href="/tasks"
+        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors lg:hidden"
+        aria-label="Tugas"
+      >
+        <CheckSquare size={22} />
+      </Link>
+
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card lg:hidden">
         <div className="flex items-center justify-around py-2">
-          {navItems.slice(0, 5).map((item) => {
+          {mobileNavItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
