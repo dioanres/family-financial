@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Users, Copy, Check } from "lucide-react";
 
 interface Family { id: string; name: string; inviteCode: string | null; }
 interface FamilyMember { id: string; role: string; nickname: string | null; user: { name: string | null; email: string | null; }; }
 
 export default function SettingsPage() {
+  const { data: session, update: updateSession } = useSession();
   const [family, setFamily] = useState<Family | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -17,7 +19,46 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [profileName, setProfileName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
   useEffect(() => { fetchFamily(); }, []);
+  useEffect(() => { setProfileName(session?.user?.name || ""); }, [session?.user?.name]);
+
+  async function handleProfileSave(e: React.FormEvent) {
+    e.preventDefault();
+    setProfileError("");
+    setProfileSuccess("");
+    setProfileSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileName,
+          currentPassword: currentPassword || undefined,
+          newPassword: newPassword || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileError(data.error);
+        return;
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setProfileSuccess("Profil berhasil diperbarui");
+      await updateSession({ name: data.user.name });
+    } catch {
+      setProfileError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }
 
   async function fetchFamily() {
     try {
@@ -51,6 +92,54 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold tracking-tight">Pengaturan</h1><p className="text-muted-foreground mt-1">Kelola akun dan keluarga Anda</p></div>
       {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+
+      <div className="rounded-xl border bg-card p-6">
+        <h2 className="text-lg font-semibold mb-4">Profil</h2>
+        {profileError && <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{profileError}</div>}
+        {profileSuccess && <div className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-600">{profileSuccess}</div>}
+        <form onSubmit={handleProfileSave} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">Nama</label>
+            <input
+              type="text"
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+              required
+              placeholder="Nama Anda"
+              className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium">Password Saat Ini</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Isi jika ingin ganti password"
+                className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Password Baru</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Minimal 8 karakter"
+                className="mt-1 w-full rounded-lg border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={profileSaving}
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {profileSaving ? "Menyimpan..." : "Simpan Profil"}
+          </button>
+        </form>
+      </div>
 
       {!family ? (
         <div className="space-y-4">

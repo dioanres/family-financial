@@ -217,7 +217,7 @@ export default function ArisanDetailPage() {
           </span>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Iuran {formatCurrency(arisan.contributionAmount)} / bulan &middot; Pot {formatCurrency(potAmount)}
+          Iuran {formatCurrency(arisan.contributionAmount)} / bulan &middot; Total Terima Arisan {formatCurrency(potAmount)}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           Bayar tiap tgl {arisan.paymentDueDay}, kocokan tiap tgl {arisan.drawDay}

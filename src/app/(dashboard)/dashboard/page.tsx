@@ -25,6 +25,7 @@ export default async function DashboardPage() {
 
   const familyId = user?.familyMembers[0]?.familyId;
   const familyName = user?.familyMembers[0]?.family?.name || "Keluarga";
+  const displayName = user?.name || session.user.email;
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -62,7 +63,8 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{greeting} 👋</h1>
         <p className="text-muted-foreground mt-1">
-          Selamat datang di <span className="font-medium text-foreground">{familyName}</span>
+          Selamat Datang <span className="font-medium text-foreground">{displayName}</span> di{" "}
+          <span className="font-medium text-foreground">{familyName}</span>
         </p>
       </div>
 
