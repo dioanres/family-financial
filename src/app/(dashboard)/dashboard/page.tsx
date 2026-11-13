@@ -3,6 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, getGreeting } from "@/lib/utils";
+import { parseMonthParam, monthRange, formatMonthLabel } from "@/lib/month";
+import { getBudgetSummaryForMonth } from "@/lib/budget-summary";
+import { MonthSelector } from "@/components/month-selector";
 import {
   Wallet,
   CheckSquare,
@@ -14,7 +17,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { month?: string };
+}) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) redirect("/login");
 
@@ -26,11 +33,11 @@ export default async function DashboardPage() {
   const familyId = user?.familyMembers[0]?.familyId;
   const familyName = user?.familyMembers[0]?.family?.name || "Keluarga";
   const displayName = user?.name || session.user.email;
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const month = parseMonthParam(searchParams?.month);
+  const { start: startOfMonth, end: endOfMonth } = monthRange(month);
+  const monthLabel = formatMonthLabel(month);
 
-  let totalIncome = 0, totalExpense = 0, pendingTasks = 0, shoppingItems = 0, upcomingEvents = 0;
+  let totalIncome = 0, totalExpense = 0, pendingTasks = 0, shoppingItems = 0, monthEvents = 0;
 
   if (familyId) {
     const transactions = await prisma.transaction.findMany({
@@ -40,8 +47,12 @@ export default async function DashboardPage() {
     totalExpense = transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
     pendingTasks = await prisma.task.count({ where: { familyId, status: { not: "COMPLETED" } } });
     shoppingItems = await prisma.shoppingItem.count({ where: { familyId, isBought: false } });
-    upcomingEvents = await prisma.calendarEvent.count({ where: { familyId, startTime: { gte: now } } });
+    monthEvents = await prisma.calendarEvent.count({ where: { familyId, startTime: { gte: startOfMonth, lte: endOfMonth } } });
   }
+
+  const budgetSummary = familyId
+    ? await getBudgetSummaryForMonth(familyId, month)
+    : { totalBudget: 0, totalSpent: 0, totalRemaining: 0, hasBudgets: false };
 
   const balance = totalIncome - totalExpense;
   const greeting = getGreeting();
@@ -55,7 +66,7 @@ export default async function DashboardPage() {
   const quickActions = [
     { label: "Tugas", count: pendingTasks, icon: CheckSquare, href: "/tasks", description: "tugas belum selesai" },
     { label: "Belanja", count: shoppingItems, icon: ShoppingCart, href: "/shopping", description: "item perlu dibeli" },
-    { label: "Agenda", count: upcomingEvents, icon: Calendar, href: "/calendar", description: "acara mendatang" },
+    { label: "Agenda", count: monthEvents, icon: Calendar, href: "/calendar", description: "acara bulan ini" },
   ];
 
   return (
@@ -68,6 +79,8 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      <MonthSelector month={month} basePath="/dashboard" />
+
       <div className="grid gap-4 sm:grid-cols-3">
         {summaryCards.map((card) => (
           <Link key={card.label} href={card.href} className="group rounded-xl border bg-card p-5 transition-all hover:shadow-md">
@@ -76,10 +89,32 @@ export default async function DashboardPage() {
               <div className={`rounded-lg p-2 ${card.bgColor}`}><card.icon size={16} className={card.color} /></div>
             </div>
             <p className={`mt-2 text-xl font-bold ${card.color}`}>{card.value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Bulan ini</p>
+            <p className="mt-1 text-xs text-muted-foreground">{monthLabel}</p>
           </Link>
         ))}
       </div>
+
+      {budgetSummary.hasBudgets && (
+        <div className="rounded-xl border bg-card p-6">
+          <h2 className="mb-4 text-lg font-semibold">🎯 Budget Bulan Ini</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Budget</p>
+              <p className="mt-1 text-xl font-bold">{formatCurrency(budgetSummary.totalBudget)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Terpakai</p>
+              <p className="mt-1 text-xl font-bold text-orange-600">{formatCurrency(budgetSummary.totalSpent)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Sisa</p>
+              <p className={`mt-1 text-xl font-bold ${budgetSummary.totalRemaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                {formatCurrency(budgetSummary.totalRemaining)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-4 text-lg font-semibold">Ringkasan Hari Ini</h2>
