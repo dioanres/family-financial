@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency, getGreeting } from "@/lib/utils";
 import { parseMonthParam, monthRange, formatMonthLabel } from "@/lib/month";
 import { getBudgetSummaryForMonth } from "@/lib/budget-summary";
+import { getBalanceInsight } from "@/lib/dashboard-insight";
 import { MonthSelector } from "@/components/month-selector";
 import {
   Wallet,
@@ -55,6 +56,7 @@ export default async function DashboardPage({
     : { totalBudget: 0, totalSpent: 0, totalRemaining: 0, hasBudgets: false };
 
   const balance = totalIncome - totalExpense;
+  const balanceInsight = getBalanceInsight(balance, monthLabel);
   const greeting = getGreeting();
 
   const summaryCards = [
@@ -66,7 +68,7 @@ export default async function DashboardPage({
   const quickActions = [
     { label: "Tugas", count: pendingTasks, icon: CheckSquare, href: "/tasks", description: "tugas belum selesai" },
     { label: "Belanja", count: shoppingItems, icon: ShoppingCart, href: "/shopping", description: "item perlu dibeli" },
-    { label: "Agenda", count: monthEvents, icon: Calendar, href: "/calendar", description: "acara bulan ini" },
+    { label: "Agenda", count: monthEvents, icon: Calendar, href: "/calendar", description: `acara ${monthLabel}` },
   ];
 
   return (
@@ -96,7 +98,7 @@ export default async function DashboardPage({
 
       {budgetSummary.hasBudgets && (
         <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">🎯 Budget Bulan Ini</h2>
+          <h2 className="mb-4 text-lg font-semibold">🎯 Budget {monthLabel}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <p className="text-sm text-muted-foreground">Total Budget</p>
@@ -117,7 +119,7 @@ export default async function DashboardPage({
       )}
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Ringkasan Hari Ini</h2>
+        <h2 className="mb-4 text-lg font-semibold">Ringkasan</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {quickActions.map((action) => (
             <Link key={action.label} href={action.href} className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:shadow-md">
@@ -149,18 +151,13 @@ export default async function DashboardPage({
         <div className="rounded-xl border bg-card p-6">
           <h3 className="mb-3 text-lg font-semibold">💡 Insight</h3>
           <div className="space-y-3">
-            {balance >= 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Keuangan keluarga Anda dalam kondisi baik bulan ini.{" "}
-                <span className="font-medium text-emerald-600">Sisa {formatCurrency(balance)}</span> tersedia untuk pengeluaran.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Pengeluaran bulan ini melebihi pemasukan.{" "}
-                <span className="font-medium text-destructive">Defisit {formatCurrency(Math.abs(balance))}</span>.
-                Pertimbangkan untuk mengurangi pengeluaran non-esensial.
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              {balanceInsight.lead}{" "}
+              <span className={`font-medium ${balanceInsight.isPositive ? "text-emerald-600" : "text-destructive"}`}>
+                {balanceInsight.emphasisLabel} {formatCurrency(Math.abs(balance))}
+              </span>{" "}
+              {balanceInsight.tail}
+            </p>
             {pendingTasks > 0 && (
               <p className="text-sm text-muted-foreground">
                 Ada <span className="font-medium">{pendingTasks} tugas</span> yang belum selesai. Jangan lupa untuk menyelesaikannya!
