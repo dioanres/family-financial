@@ -148,6 +148,11 @@ export default function BudgetsPage() {
         setQuickAddBudgetId(null);
         setExpenseForm(defaultExpenseForm);
         fetchBudgets();
+        setBudgetTransactions((prev) => {
+          const next = { ...prev };
+          delete next[budget.id];
+          return next;
+        });
         showToast("success", "Pengeluaran berhasil ditambahkan");
       } else {
         showToast("error", data.error || "Gagal menambah pengeluaran");
