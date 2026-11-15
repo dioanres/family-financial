@@ -169,6 +169,7 @@ export default async function DashboardPage({
       )}
 
       {familyId && (
+        <FamilyOnly>
         <div className="rounded-xl border bg-card p-6">
           <h3 className="mb-3 text-lg font-semibold">💡 Insight</h3>
           <div className="space-y-3">
@@ -186,6 +187,7 @@ export default async function DashboardPage({
             )}
           </div>
         </div>
+        </FamilyOnly>
       )}
     </div>
   );
