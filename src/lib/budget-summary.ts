@@ -8,12 +8,14 @@ export interface BudgetSummary {
   hasBudgets: boolean;
 }
 
-export async function getBudgetSummaryForMonth(familyId: string, monthStr: string): Promise<BudgetSummary> {
+export async function getBudgetSummaryForMonth(scope: { familyId: string } | { userId: string }, monthStr: string): Promise<BudgetSummary> {
   const { start, end } = monthRange(monthStr);
+
+  const scopeWhere = "familyId" in scope ? { familyId: scope.familyId, isPersonal: false } : { userId: scope.userId, isPersonal: true };
 
   const budgets = await prisma.budget.findMany({
     where: {
-      familyId,
+      ...scopeWhere,
       startDate: { lte: end },
       endDate: { gte: start },
     },
@@ -30,7 +32,7 @@ export async function getBudgetSummaryForMonth(familyId: string, monthStr: strin
     totalBudget += budget.amount;
     const spentAgg = await prisma.transaction.aggregate({
       where: {
-        familyId,
+        ...scopeWhere,
         type: "EXPENSE",
         categoryId: budget.categoryId,
         date: { gte: budget.startDate, lte: budget.endDate },

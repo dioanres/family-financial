@@ -52,7 +52,7 @@ export default async function DashboardPage({
   }
 
   const budgetSummary = familyId
-    ? await getBudgetSummaryForMonth(familyId, month)
+    ? await getBudgetSummaryForMonth({ familyId }, month)
     : { totalBudget: 0, totalSpent: 0, totalRemaining: 0, hasBudgets: false };
 
   const balance = totalIncome - totalExpense;
