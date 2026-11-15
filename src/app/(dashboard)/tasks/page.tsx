@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Check, Clock, AlertCircle, Trash2, X, CheckCircle } from "lucide-react";
+import { usePersonalMode } from "@/lib/personal-mode-context";
 
 interface Task {
   id: string; title: string; description: string | null; status: string; priority: string; dueDate: string | null;
 }
 
 export default function TasksPage() {
+  const { isPersonal } = usePersonalMode();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", priority: "LOW", dueDate: "" });
@@ -19,11 +21,11 @@ export default function TasksPage() {
     setTimeout(() => setToast(null), 4000);
   }
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => { fetchTasks(); }, [isPersonal]);
 
   async function fetchTasks() {
     try {
-      const res = await fetch("/api/tasks");
+      const res = await fetch(`/api/tasks?personal=${isPersonal}`);
       const data = await res.json();
       setTasks(data.tasks || []);
     } catch (error) { console.error(error); } finally { setLoading(false); }
@@ -32,7 +34,7 @@ export default function TasksPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const res = await fetch("/api/tasks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, personal: isPersonal }) });
       const data = await res.json();
       if (res.ok) {
         setShowForm(false);
