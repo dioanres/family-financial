@@ -21,6 +21,8 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notification-bell";
 import { OneSignalInit } from "@/components/onesignal-init";
+import { PersonalModeProvider } from "@/lib/personal-mode-context";
+import { PersonalModeToggle } from "@/components/personal-mode-toggle";
 
 const navItems = [
   {
@@ -82,6 +84,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <PersonalModeProvider>
     <div className="min-h-screen bg-background">
       <OneSignalInit />
       {/* Mobile Header */}
@@ -91,6 +94,7 @@ export default function DashboardLayout({
           <span className="font-semibold text-foreground">Rumadana</span>
         </div>
         <div className="flex items-center gap-2">
+          <PersonalModeToggle />
           <NotificationBell />
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -121,7 +125,10 @@ export default function DashboardLayout({
             <Image src="/logo/logo.png" alt="Rumadana" width={32} height={32} />
             <span className="font-semibold text-foreground">Rumadana</span>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-2">
+            <PersonalModeToggle />
+            <NotificationBell />
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
@@ -200,5 +207,6 @@ export default function DashboardLayout({
       {/* Bottom spacing for mobile nav */}
       <div className="h-20 lg:hidden" />
     </div>
+    </PersonalModeProvider>
   );
 }
