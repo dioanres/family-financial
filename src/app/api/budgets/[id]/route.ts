@@ -2,11 +2,27 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getUserAndFamilyId } from "@/lib/family";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { userId, familyId } = await getUserAndFamilyId(session.user.email);
+
+    const existing = await prisma.budget.findUnique({ where: { id: params.id } });
+    if (!existing) return NextResponse.json({ error: "Budget tidak ditemukan" }, { status: 404 });
+
+    if (existing.isPersonal) {
+      if (existing.userId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      if (existing.familyId !== familyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const data = await req.json();
     const budget = await prisma.budget.update({
@@ -30,6 +46,21 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { userId, familyId } = await getUserAndFamilyId(session.user.email);
+
+    const existing = await prisma.budget.findUnique({ where: { id: params.id } });
+    if (!existing) return NextResponse.json({ error: "Budget tidak ditemukan" }, { status: 404 });
+
+    if (existing.isPersonal) {
+      if (existing.userId !== userId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      if (existing.familyId !== familyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     await prisma.budget.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
