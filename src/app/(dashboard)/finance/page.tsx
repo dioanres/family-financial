@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, X, Pencil, Download, Filter, AlertCircle, CheckCircle } from "lucide-react";
+import { usePersonalMode } from "@/lib/personal-mode-context";
 
 interface Transaction {
   id: string; amount: number; type: string; description: string | null; date: string;
@@ -14,6 +15,7 @@ interface Category { id: string; name: string; icon: string | null; color: strin
 const defaultForm = { amount: "", type: "EXPENSE", description: "", date: new Date().toISOString().split("T")[0], categoryId: "" };
 
 export default function FinancePage() {
+  const { isPersonal } = usePersonalMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -30,7 +32,7 @@ export default function FinancePage() {
   }
 
   useEffect(() => { fetchAll(); }, []);
-  useEffect(() => { fetchFiltered(); }, [filters]);
+  useEffect(() => { fetchFiltered(); }, [filters, isPersonal]);
 
   async function fetchAll() {
     try {
@@ -46,6 +48,7 @@ export default function FinancePage() {
       if (filters.categoryId) params.set("categoryId", filters.categoryId);
       if (filters.from) params.set("from", filters.from);
       if (filters.to) params.set("to", filters.to);
+      params.set("personal", String(isPersonal));
       const res = await fetch(`/api/transactions?${params}`);
       setTransactions((await res.json()).transactions || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -63,7 +66,8 @@ export default function FinancePage() {
     try {
       const url = editingId ? `/api/transactions/${editingId}` : "/api/transactions";
       const method = editingId ? "PUT" : "POST";
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const body = editingId ? form : { ...form, personal: isPersonal };
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok) {
         setShowForm(false);
