@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Plus, Trash2, X, Pencil, AlertCircle, CheckCircle, Target, TrendingDown, DollarSign } from "lucide-react";
+import { usePersonalMode } from "@/lib/personal-mode-context";
 
 interface Category { id: string; name: string; icon: string | null; color: string | null; }
 interface Budget {
@@ -15,6 +16,7 @@ const defaultForm = { name: "", amount: "", startDate: "", endDate: "", category
 const defaultExpenseForm = { amount: "", description: "", date: "" };
 
 export default function BudgetsPage() {
+  const { isPersonal } = usePersonalMode();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -44,7 +46,7 @@ export default function BudgetsPage() {
   }
 
   useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchBudgets(); }, [month]);
+  useEffect(() => { fetchBudgets(); }, [month, isPersonal]);
 
   async function fetchCategories() {
     try {
@@ -56,7 +58,7 @@ export default function BudgetsPage() {
 
   async function fetchBudgets() {
     try {
-      const res = await fetch(`/api/budgets?month=${month}`);
+      const res = await fetch(`/api/budgets?month=${month}&personal=${isPersonal}`);
       const data = await res.json();
       setBudgets(data.budgets || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -89,7 +91,8 @@ export default function BudgetsPage() {
     try {
       const url = editingId ? `/api/budgets/${editingId}` : "/api/budgets";
       const method = editingId ? "PATCH" : "POST";
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const body = editingId ? form : { ...form, personal: isPersonal };
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok) {
         setShowForm(false);
@@ -141,6 +144,7 @@ export default function BudgetsPage() {
           description: expenseForm.description,
           date: expenseForm.date,
           categoryId: budget.categoryId,
+          personal: isPersonal,
         }),
       });
       const data = await res.json();
