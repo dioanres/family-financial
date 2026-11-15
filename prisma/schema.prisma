@@ -24,10 +24,13 @@ model Transaction {
   type        String    // INCOME, EXPENSE
   description String?
   date        DateTime  @default(now())
-  familyId    String
+  familyId    String?
   categoryId  String?
-  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  isPersonal  Boolean   @default(false)
+  userId      String?
+  family      Family?   @relation(fields: [familyId], references: [id], onDelete: Cascade)
   category    Category? @relation(fields: [categoryId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Budget {
@@ -36,10 +39,13 @@ model Budget {
   amount     Float
   startDate  DateTime
   endDate    DateTime
-  familyId   String
+  familyId   String?
   categoryId String?
-  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  isPersonal Boolean   @default(false)
+  userId     String?
+  family      Family?   @relation(fields: [familyId], references: [id], onDelete: Cascade)
   category   Category? @relation(fields: [categoryId], references: [id])
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Family {
@@ -85,8 +91,11 @@ model Task {
   priority    String    @default("LOW") // LOW, MEDIUM, HIGH
   dueDate     DateTime?
   assignedToId String?
-  familyId    String
-  family      Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  familyId    String?
+  isPersonal  Boolean   @default(false)
+  userId      String?
+  family      Family?   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ShoppingItem {
@@ -125,6 +134,9 @@ model User {
   arisanMembers  ArisanMember[]
   arisansCreated Arisan[]       @relation("ArisanCreatedBy")
   notifications  Notification[]
+  transactions   Transaction[]
+  budgets        Budget[]
+  tasks          Task[]
 }
 
 enum ArisanStatus {
