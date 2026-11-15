@@ -47,6 +47,7 @@ export default function BudgetsPage() {
 
   useEffect(() => { fetchCategories(); }, []);
   useEffect(() => { fetchBudgets(); }, [month, isPersonal]);
+  useEffect(() => { setBudgetTransactions({}); setExpandedBudgetId(null); }, [isPersonal]);
 
   async function fetchCategories() {
     try {
@@ -184,6 +185,7 @@ export default function BudgetsPage() {
       if (budget.categoryId) params.set("categoryId", budget.categoryId);
       params.set("from", new Date(budget.startDate).toISOString().split("T")[0]);
       params.set("to", new Date(budget.endDate).toISOString().split("T")[0]);
+      params.set("personal", String(isPersonal));
       const res = await fetch(`/api/transactions?${params}`);
       const data = await res.json();
       setBudgetTransactions(prev => ({ ...prev, [budget.id]: data.transactions || [] }));

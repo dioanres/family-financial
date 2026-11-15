@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePersonalMode } from "@/lib/personal-mode-context";
 import { formatCurrency } from "@/lib/utils";
 import { monthRange } from "@/lib/month";
+
+function toLocalDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 import { getBalanceInsight } from "@/lib/dashboard-insight";
 import { Wallet, TrendingUp, TrendingDown, CheckSquare, ArrowRight } from "lucide-react";
 
@@ -65,8 +69,8 @@ export function PersonalSummary({
 
     async function fetchAll() {
       const { start, end } = monthRange(month);
-      const from = start.toISOString().split("T")[0];
-      const to = end.toISOString().split("T")[0];
+      const from = toLocalDateString(start);
+      const to = toLocalDateString(end);
 
       try {
         const [txRes, budgetRes, taskRes] = await Promise.all([

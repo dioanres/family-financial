@@ -44,11 +44,11 @@ export default async function DashboardPage({
 
   if (familyId) {
     const transactions = await prisma.transaction.findMany({
-      where: { familyId, date: { gte: startOfMonth, lte: endOfMonth } },
+      where: { familyId, isPersonal: false, date: { gte: startOfMonth, lte: endOfMonth } },
     });
     totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
     totalExpense = transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
-    pendingTasks = await prisma.task.count({ where: { familyId, status: { not: "COMPLETED" } } });
+    pendingTasks = await prisma.task.count({ where: { familyId, isPersonal: false, status: { not: "COMPLETED" } } });
     shoppingItems = await prisma.shoppingItem.count({ where: { familyId, isBought: false } });
     monthEvents = await prisma.calendarEvent.count({ where: { familyId, startTime: { gte: startOfMonth, lte: endOfMonth } } });
   }
