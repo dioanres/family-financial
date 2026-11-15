@@ -7,6 +7,8 @@ import { parseMonthParam, monthRange, formatMonthLabel } from "@/lib/month";
 import { getBudgetSummaryForMonth } from "@/lib/budget-summary";
 import { getBalanceInsight } from "@/lib/dashboard-insight";
 import { MonthSelector } from "@/components/month-selector";
+import { FamilyOnly } from "@/components/dashboard/mode-aware";
+import { PersonalSummary } from "@/components/dashboard/personal-summary";
 import {
   Wallet,
   CheckSquare,
@@ -83,54 +85,73 @@ export default async function DashboardPage({
 
       <MonthSelector month={month} basePath="/dashboard" />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {summaryCards.map((card) => (
-          <Link key={card.label} href={card.href} className="group rounded-xl border bg-card p-5 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">{card.label}</span>
-              <div className={`rounded-lg p-2 ${card.bgColor}`}><card.icon size={16} className={card.color} /></div>
-            </div>
-            <p className={`mt-2 text-xl font-bold ${card.color}`}>{card.value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{monthLabel}</p>
-          </Link>
-        ))}
-      </div>
+      <PersonalSummary month={month} monthLabel={monthLabel} />
 
-      {budgetSummary.hasBudgets && (
-        <div className="rounded-xl border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">🎯 Budget {monthLabel}</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Budget</p>
-              <p className="mt-1 text-xl font-bold">{formatCurrency(budgetSummary.totalBudget)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Terpakai</p>
-              <p className="mt-1 text-xl font-bold text-orange-600">{formatCurrency(budgetSummary.totalSpent)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Sisa</p>
-              <p className={`mt-1 text-xl font-bold ${budgetSummary.totalRemaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>
-                {formatCurrency(budgetSummary.totalRemaining)}
-              </p>
+      <FamilyOnly>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {summaryCards.map((card) => (
+            <Link key={card.label} href={card.href} className="group rounded-xl border bg-card p-5 transition-all hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">{card.label}</span>
+                <div className={`rounded-lg p-2 ${card.bgColor}`}><card.icon size={16} className={card.color} /></div>
+              </div>
+              <p className={`mt-2 text-xl font-bold ${card.color}`}>{card.value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{monthLabel}</p>
+            </Link>
+          ))}
+        </div>
+      </FamilyOnly>
+
+      <FamilyOnly>
+        {budgetSummary.hasBudgets && (
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">🎯 Budget {monthLabel}</h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Budget</p>
+                <p className="mt-1 text-xl font-bold">{formatCurrency(budgetSummary.totalBudget)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Terpakai</p>
+                <p className="mt-1 text-xl font-bold text-orange-600">{formatCurrency(budgetSummary.totalSpent)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Sisa</p>
+                <p className={`mt-1 text-xl font-bold ${budgetSummary.totalRemaining >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  {formatCurrency(budgetSummary.totalRemaining)}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </FamilyOnly>
 
       <div>
         <h2 className="mb-4 text-lg font-semibold">Ringkasan</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          {quickActions.map((action) => (
-            <Link key={action.label} href={action.href} className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:shadow-md">
-              <div className="rounded-lg bg-primary/10 p-3"><action.icon size={20} className="text-primary" /></div>
-              <div className="flex-1">
-                <p className="text-2xl font-bold">{action.count}</p>
-                <p className="text-sm text-muted-foreground">{action.description}</p>
-              </div>
-              <ArrowRight size={16} className="text-muted-foreground transition-transform group-hover:translate-x-1" />
-            </Link>
-          ))}
+          {quickActions.map((action) =>
+            action.label === "Tugas" ? (
+              <FamilyOnly key={action.label}>
+                <Link href={action.href} className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:shadow-md">
+                  <div className="rounded-lg bg-primary/10 p-3"><action.icon size={20} className="text-primary" /></div>
+                  <div className="flex-1">
+                    <p className="text-2xl font-bold">{action.count}</p>
+                    <p className="text-sm text-muted-foreground">{action.description}</p>
+                  </div>
+                  <ArrowRight size={16} className="text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </Link>
+              </FamilyOnly>
+            ) : (
+              <Link key={action.label} href={action.href} className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:shadow-md">
+                <div className="rounded-lg bg-primary/10 p-3"><action.icon size={20} className="text-primary" /></div>
+                <div className="flex-1">
+                  <p className="text-2xl font-bold">{action.count}</p>
+                  <p className="text-sm text-muted-foreground">{action.description}</p>
+                </div>
+                <ArrowRight size={16} className="text-muted-foreground transition-transform group-hover:translate-x-1" />
+              </Link>
+            )
+          )}
         </div>
       </div>
 
