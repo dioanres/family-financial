@@ -120,7 +120,7 @@ export default function DashboardLayout({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-6">
+        <div className="hidden h-16 items-center justify-between gap-2 border-b border-border px-6 lg:flex">
           <div className="flex items-center gap-2">
             <Image src="/logo/logo.png" alt="Rumadana" width={32} height={32} />
             <span className="font-semibold text-foreground">Rumadana</span>
